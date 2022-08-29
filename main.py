@@ -26,7 +26,11 @@ def get_matches():
 
     result_list = driver.find_elements(By.XPATH, "//table[@class='generic_kv_table csgo_scoreboard_root']/tbody/tr")
 
+    total_results = len(result_list)
+    counter = 0
     for match_result in result_list:
+        counter += 1
+        print(f'Progress {counter} / {total_results}')
         try:
             match_general = match_result.find_element(By.CLASS_NAME, "csgo_scoreboard_inner_left")
             match_players = match_result.find_element(By.CLASS_NAME, "csgo_scoreboard_inner_right")

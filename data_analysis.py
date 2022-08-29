@@ -4,7 +4,19 @@ from datetime import timedelta, datetime
 from models import Player, Match
 
 
-def get_player_stats(games, player_name):
+def get_player_stats(player_name, matches):
+    """
+    Function returns a Player object, that contains that player's stats sorted into individual maps
+    :param player_name: String, name of the given player
+    :param matches: List of matches that are taken into account
+    :return: Player object
+    """
+    games = dict()
+    for match in matches:
+        if match.map_name not in games.keys():
+            games[match.map_name] = []
+        games[match.map_name].append(match)
+
     maps = dict()
     for map in games.keys():
         games_counter = 0
@@ -92,7 +104,100 @@ def get_player_stats(games, player_name):
     )
 
 
-def get_worst(player, matches):
+def get_spree(player_name, matches, win=True, draw=False):
+    """
+    Function searches for the longest win streak on every map and returns dictionary with maps and streak on every map
+    :param player_name: string, name of a player that is to be searched for in matches
+    :param matches: list of matches
+    :param win: boolean, whether the spree counts won or lost games
+    :param draw: boolean, whether to count draws towards a streak or not
+    :return: dictionary of maps and numbers of games won in a row, as well as list of matches in given spree
+    """
+    maps = dict()
+    tmp_spree_matches = []
+    spree_matches = []
+    tmp_spree_counter = 0
+    spree_counter = 0
+    for match in matches:
+        if match.map_name not in maps.keys():
+            maps[match.map_name] = []
+        maps[match.map_name].append(match)
+        player = match.players.get(player_name)
+        team = player.get('team')
+        if match.result[0] > match.result[1]:
+            if team == 1:
+                if win:
+                    tmp_spree_counter += 1
+                    tmp_spree_matches.append(match)
+                else:
+                    if spree_counter < tmp_spree_counter:
+                        spree_counter = tmp_spree_counter
+                        spree_matches = tmp_spree_matches.copy()
+                    tmp_spree_counter = 0
+                    tmp_spree_matches = []
+            else:
+                if win:
+                    if spree_counter < tmp_spree_counter:
+                        spree_counter = tmp_spree_counter
+                        spree_matches = tmp_spree_matches.copy()
+                    tmp_spree_counter = 0
+                    tmp_spree_matches = []
+                else:
+                    tmp_spree_counter += 1
+                    tmp_spree_matches.append(match)
+        elif match.result[0] < match.result[1]:
+            if team == 2:
+                if win:
+                    tmp_spree_counter += 1
+                    tmp_spree_matches.append(match)
+                else:
+                    if spree_counter < tmp_spree_counter:
+                        spree_counter = tmp_spree_counter
+                        spree_matches = tmp_spree_matches.copy()
+                    tmp_spree_counter = 0
+                    tmp_spree_matches = []
+            else:
+                if win:
+                    if spree_counter < tmp_spree_counter:
+                        spree_counter = tmp_spree_counter
+                        spree_matches = tmp_spree_matches
+                    tmp_spree_counter = 0
+                    tmp_spree_matches = []
+                else:
+                    tmp_spree_counter += 1
+                    tmp_spree_matches.append(match)
+        else:
+            if draw:
+                tmp_spree_counter += 1
+                tmp_spree_matches.append(match)
+            else:
+                if spree_counter < tmp_spree_counter:
+                    spree_counter = tmp_spree_counter
+                    spree_matches = tmp_spree_matches
+                tmp_spree_counter = 0
+                tmp_spree_matches = []
+
+    if spree_counter < tmp_spree_counter:
+        spree_counter = tmp_spree_counter
+        spree_matches = tmp_spree_matches
+
+    results = dict()
+    results['total'] = [spree_counter, spree_matches]
+
+    for map in maps.keys():
+        if len(maps.keys()) > 1:
+            results[map], _ = get_spree(player_name, maps[map], win, draw)
+
+    return [spree_counter, spree_matches], results
+
+
+def get_worst(player_name, matches):
+    """
+        Function returns a dictionary with player's worst matches in given pool
+        :param player_name: string, name of the given player
+        :param matches: List of matches that is taken into account
+        :return: Dictionary of 3 worst matches
+        """
     lowest_score_match = None
     most_deaths_match = None
     least_kills_match = None
@@ -100,26 +205,32 @@ def get_worst(player, matches):
         if lowest_score_match is None:
             lowest_score_match = match
         else:
-            tmp = match.players[player].get('score')
-            if tmp < lowest_score_match.players[player].get('score'):
+            tmp = match.players[player_name].get('score')
+            if tmp < lowest_score_match.players[player_name].get('score'):
                 lowest_score_match = match
         if most_deaths_match is None:
             most_deaths_match = match
         else:
-            tmp = match.players[player].get('deaths')
-            if tmp > most_deaths_match.players[player].get('deaths'):
+            tmp = match.players[player_name].get('deaths')
+            if tmp > most_deaths_match.players[player_name].get('deaths'):
                 most_deaths_match = match
         if least_kills_match is None:
             least_kills_match = match
         else:
-            tmp = match.players[player].get('kills')
-            if tmp < least_kills_match.players[player].get('kills'):
+            tmp = match.players[player_name].get('kills')
+            if tmp < least_kills_match.players[player_name].get('kills'):
                 least_kills_match = match
 
-    return lowest_score_match, most_deaths_match, least_kills_match
+    return {"lowest_score": lowest_score_match, "most_deaths": most_deaths_match, "least_kills": least_kills_match}
 
 
-def get_best(player, matches):
+def get_best(player_name, matches):
+    """
+    Function returns a dictionary with player's best matches in given pool
+    :param player_name: string, name of the given player
+    :param matches: List of matches that is taken into account
+    :return: Dictionary of 3 best matches
+    """
     highest_score_match = None
     least_deaths_match = None
     most_kills_match = None
@@ -127,59 +238,51 @@ def get_best(player, matches):
         if highest_score_match is None:
             highest_score_match = match
         else:
-            tmp = match.players[player].get('score')
-            if tmp > highest_score_match.players[player].get('score'):
+            tmp = match.players[player_name].get('score')
+            if tmp > highest_score_match.players[player_name].get('score'):
                 highest_score_match = match
         if least_deaths_match is None:
             least_deaths_match = match
         else:
-            tmp = match.players[player].get('deaths')
-            if tmp < least_deaths_match.players[player].get('deaths'):
+            tmp = match.players[player_name].get('deaths')
+            if tmp < least_deaths_match.players[player_name].get('deaths'):
                 least_deaths_match = match
         if most_kills_match is None:
             most_kills_match = match
         else:
-            tmp = match.players[player].get('kills')
-            if tmp > most_kills_match.players[player].get('kills'):
+            tmp = match.players[player_name].get('kills')
+            if tmp > most_kills_match.players[player_name].get('kills'):
                 most_kills_match = match
 
-    return highest_score_match, least_deaths_match, most_kills_match
+    return {"highest_score": highest_score_match, "least_deaths": least_deaths_match, "most_kills": most_kills_match}
 
 
-if __name__ == "__main__":
-
-    with open('Jaro_MM_results.json', 'r') as input_file:
-        input_string = input_file.read()
-        matches = jsonpickle.decode(input_string)
-
-    maps = dict()
-    for match in matches:
-        if match.map_name not in maps.keys():
-            maps[match.map_name] = []
-        #  Here you filer matches
-        if "\u26a1 Jarlloth" in match.players.keys() and "Not Gay But 20 Dolla Is 20 Dolla" not in match.players.keys() and match.date.date() > datetime(2019, 1, 1).date():
-            maps[match.map_name].append(match)
-
+def filter_matches(matches):
+    """
+    Filters matches list
+    :param matches: list of all matches that are to be filtered
+    :return: filtered list of matches
+    """
     filtered_matches = []
     for match in matches:
-        if 16 in match.result and "Mystyk" in match.players.keys():
-            if match.players["Mystyk"].get('ping') > 0:
-                filtered_matches.append(match)
+        if "\u26a1 Jarlloth" in match.players.keys() and match.date.date() > datetime(2022, 7, 30).date():
+            filtered_matches.append(match)
 
-    map_names = list(maps.keys())
-    for map_name in map_names:
-        if len(maps[map_name]) == 0:
-            maps.pop(map_name)
+    return filtered_matches
 
-    mystyk = get_player_stats(maps, 'Mystyk')
-    jaro = get_player_stats(maps, "\u26a1 Jarlloth")
 
-    worst_matches = get_worst("Mystyk", filtered_matches)
-    best_matches = get_best("Mystyk", filtered_matches)
+def print_player_stats(player_name, matches, file_name):
+    """
+    Function prints given player's stats into the txt file
+    :param player_name:
+    :param matches: list of matches that are to be taken into account
+    :param file_name: string, name of the txt file
+    :return: void
+    """
 
-    player = jaro
+    player = get_player_stats(player_name, matches)
 
-    with open('analyzed_data.txt', 'w') as output_file:
+    with open(file_name + '.txt', 'w') as output_file:
         total_games = 0
         total_wins = 0
         total_loses = 0
@@ -208,7 +311,7 @@ if __name__ == "__main__":
             except ZeroDivisionError:
                 win_lose_ration = map.get("wins")
             output_file.write(f'W/L {round(win_lose_ration, 2)}\n')
-            output_file.write(f'WIN RATIO {round(map.get("wins")/map.get("games"), 2)}\n')
+            output_file.write(f'WIN RATIO {round(map.get("wins") / map.get("games"), 2)}\n')
             avg_duration = map.get("duration") / games
             avg_duration = str(avg_duration).split('.')[0]
             avg_duration = avg_duration.replace('0', '', 1)
@@ -226,7 +329,7 @@ if __name__ == "__main__":
             output_file.write(f'AVG DEATHS {round(map.get("deaths") / games, 2)}\n')
             output_file.write(f'AVG SCORE {round(map.get("score") / games, 2)}\n')
             output_file.write(f'MOST FREQUENT POSITION {mode(map.get("scoreboard_positions"))} in '
-                              f'{round(map.get("scoreboard_positions").count(mode(map.get("scoreboard_positions"))) / len(map.get("scoreboard_positions")),2)}\n')
+                              f'{round(map.get("scoreboard_positions").count(mode(map.get("scoreboard_positions"))) / len(map.get("scoreboard_positions")), 2)}\n')
             try:
                 kill_death_ratio = map.get("kills") / map.get('deaths')
             except ZeroDivisionError:
@@ -284,4 +387,38 @@ if __name__ == "__main__":
         except ZeroDivisionError:
             kill_death_ratio = total_kills
         output_file.write(f'K/D {round(kill_death_ratio, 2)}\n')
+
+
+def read_matches(file_name):
+    """
+    Function reads matches from a file and returns list of given matches
+    :param file_name: String, name of the file
+    :return: List of Match objects
+    """
+    with open(file_name + '.json', 'r') as input_file:
+        input_string = input_file.read()
+        matches = jsonpickle.decode(input_string)
+
+    return matches
+
+
+if __name__ == "__main__":
+
+    matches = read_matches('results')
+
+    #  Here you filter matches
+    filtered_matches = filter_matches(matches)
+
+    #   Get longest winning/losing spree
+    # _, spree = get_spree('Mystyk', filtered_matches, True, False)
+    #
+    # for key in spree.keys():
+    #     print(f'{key} {len(spree.get(key)[1])}')
+    #     for match in spree.get(key)[1]:
+    #         print(match)
+
+    print_player_stats('Mystyk', filtered_matches, 'analyzed_data_mystyk')
+    print_player_stats('\u26a1 Jarlloth', filtered_matches, 'analyzed_data_jaro')
+
+
 

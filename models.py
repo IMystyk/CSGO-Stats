@@ -19,6 +19,9 @@ class Match:
         self.result = result
         self.players = players
 
+    def __str__(self):
+        return f'Date: {self.date} \t Map: {self.map_name} \t Result: {self.result[0]} - {self.result[1]}'
+
 
 class Map:
 
