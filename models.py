@@ -20,7 +20,7 @@ class Match:
         self.players = players
 
     def __str__(self):
-        return f'Date: {self.date} \t Map: {self.map_name} \t Result: {self.result[0]} - {self.result[1]}'
+        return f'Date: {self.date}  Map: {self.map_name}  Result: {self.result[0]} - {self.result[1]}'
 
 
 class Map:

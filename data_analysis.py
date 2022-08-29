@@ -2,6 +2,22 @@ from statistics import mode
 import jsonpickle
 from datetime import timedelta, datetime
 from models import Player, Match
+import matplotlib.pyplot as plt
+
+
+def into_maps(matches):
+    """
+    Returns a dictionary of maps and matches played on them
+    :param matches: List of matches
+    :return: Dictionary of maps and their matches
+    """
+    maps = dict()
+    for match in matches:
+        if match.map_name not in maps.keys():
+            maps[match.map_name] = []
+        maps[match.map_name].append(match)
+
+    return maps
 
 
 def get_player_stats(player_name, matches):
@@ -11,11 +27,7 @@ def get_player_stats(player_name, matches):
     :param matches: List of matches that are taken into account
     :return: Player object
     """
-    games = dict()
-    for match in matches:
-        if match.map_name not in games.keys():
-            games[match.map_name] = []
-        games[match.map_name].append(match)
+    games = into_maps(matches)
 
     maps = dict()
     for map in games.keys():
@@ -113,15 +125,12 @@ def get_spree(player_name, matches, win=True, draw=False):
     :param draw: boolean, whether to count draws towards a streak or not
     :return: dictionary of maps and numbers of games won in a row, as well as list of matches in given spree
     """
-    maps = dict()
+    maps = into_maps(matches)
     tmp_spree_matches = []
     spree_matches = []
     tmp_spree_counter = 0
     spree_counter = 0
     for match in matches:
-        if match.map_name not in maps.keys():
-            maps[match.map_name] = []
-        maps[match.map_name].append(match)
         player = match.players.get(player_name)
         team = player.get('team')
         if match.result[0] > match.result[1]:
@@ -265,7 +274,7 @@ def filter_matches(matches):
     """
     filtered_matches = []
     for match in matches:
-        if "\u26a1 Jarlloth" in match.players.keys() and match.date.date() > datetime(2022, 7, 30).date():
+        if "\u26a1 Jarlloth" in match.players.keys():  # and match.date.date() > datetime(2022, 7, 30).date():
             filtered_matches.append(match)
 
     return filtered_matches
@@ -282,7 +291,10 @@ def print_player_stats(player_name, matches, file_name):
 
     player = get_player_stats(player_name, matches)
 
-    with open(file_name + '.txt', 'w') as output_file:
+    timestamp = datetime.now()
+    date = f'{timestamp.year}{timestamp.month}{timestamp.day}{timestamp.hour}{timestamp.minute}{timestamp.second}'
+
+    with open('results/' + file_name + date + '.txt', 'w') as output_file:
         total_games = 0
         total_wins = 0
         total_loses = 0
@@ -402,6 +414,48 @@ def read_matches(file_name):
     return matches
 
 
+def plot_scores(player_name, matches):
+    """
+    Function plots graphs representing scores on different maps
+    :param player_name: Player whose team will be taken into account (for the purposes of determining win/lose)
+    :param matches: List of matches taken into account
+    :return:  void
+    """
+
+    # Assert competitive or wingman
+    if len(matches[0].players.keys()) > 4:
+        max_score = 16
+    else:
+        max_score = 9
+
+    results = dict()
+    for i in range(max_score - 1):
+        results[f'{i}:{max_score}'] = 0
+    results[f'{max_score - 1}:{max_score - 1}'] = 0
+    for i in range(max_score - 2, -1, -1):
+        results[f'{max_score}:{i}'] = 0
+
+    maps = into_maps(matches)
+    for map in maps.keys():
+        for result in results.keys():
+            results[result] = 0
+        for match in maps[map]:
+            player = match.players.get(player_name)
+            team = player.get('team')
+            if team == 1:
+                result = f'{match.result[0]}:{match.result[1]}'
+            else:
+                result = f'{match.result[1]}:{match.result[0]}'
+            results[result] += 1
+
+        names = list(results.keys())
+        values = list(results.values())
+        plt.bar(names, values)
+        plt.title(map)
+        plt.savefig(f'results\plots\{map}')
+        plt.cla()
+
+
 if __name__ == "__main__":
 
     matches = read_matches('results')
@@ -417,8 +471,8 @@ if __name__ == "__main__":
     #     for match in spree.get(key)[1]:
     #         print(match)
 
-    print_player_stats('Mystyk', filtered_matches, 'analyzed_data_mystyk')
-    print_player_stats('\u26a1 Jarlloth', filtered_matches, 'analyzed_data_jaro')
+    # print_player_stats('Mystyk', filtered_matches, 'analyzed_data_mystyk')
+    # print_player_stats('\u26a1 Jarlloth', filtered_matches, 'analyzed_data_jaro')
 
-
+    plot_scores('Mystyk', filtered_matches)
 
