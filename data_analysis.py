@@ -3,6 +3,8 @@ import jsonpickle
 from datetime import timedelta, datetime
 from models import Player, Match
 import matplotlib.pyplot as plt
+import os
+from fpdf import FPDF
 
 
 def into_maps(matches):
@@ -274,7 +276,7 @@ def filter_matches(matches):
     """
     filtered_matches = []
     for match in matches:
-        if "\u26a1 Jarlloth" in match.players.keys():  # and match.date.date() > datetime(2022, 7, 30).date():
+        if "\u26a1 Jarlloth" in match.players.keys() and match.date.date() > datetime(2022, 8, 30).date():
             filtered_matches.append(match)
 
     return filtered_matches
@@ -293,6 +295,9 @@ def print_player_stats(player_name, matches, file_name):
 
     timestamp = datetime.now()
     date = f'{timestamp.year}{timestamp.month}{timestamp.day}{timestamp.hour}{timestamp.minute}{timestamp.second}'
+
+    if not os.path.exists('results/'):
+        os.makedirs('results')
 
     with open('results/' + file_name + date + '.txt', 'w') as output_file:
         total_games = 0
@@ -400,6 +405,8 @@ def print_player_stats(player_name, matches, file_name):
             kill_death_ratio = total_kills
         output_file.write(f'K/D {round(kill_death_ratio, 2)}\n')
 
+    generate_pdf(file_name + date)
+
 
 def read_matches(file_name):
     """
@@ -421,7 +428,6 @@ def plot_scores(player_name, matches):
     :param matches: List of matches taken into account
     :return:  void
     """
-
     # Assert competitive or wingman
     if len(matches[0].players.keys()) > 4:
         max_score = 16
@@ -434,6 +440,23 @@ def plot_scores(player_name, matches):
     results[f'{max_score - 1}:{max_score - 1}'] = 0
     for i in range(max_score - 2, -1, -1):
         results[f'{max_score}:{i}'] = 0
+
+    for match in matches:
+        player = match.players.get(player_name)
+        team = player.get('team')
+        if team == 1:
+            result = f'{match.result[0]}:{match.result[1]}'
+        else:
+            result = f'{match.result[1]}:{match.result[0]}'
+        results[result] += 1
+    names = list(results.keys())
+    values = list(results.values())
+    plt.bar(names, values)
+    if not os.path.exists('results/plots/'):
+        os.makedirs('results/plots')
+    plt.title("All time")
+    plt.savefig(f'results\plots\\all_time')
+    plt.cla()
 
     maps = into_maps(matches)
     for map in maps.keys():
@@ -456,6 +479,27 @@ def plot_scores(player_name, matches):
         plt.cla()
 
 
+def generate_pdf(file_name):
+    """
+    Function generates pdf file from a txt file
+    :param file_name: Name of a text file
+    :return:
+    """
+    pdf = FPDF()
+    # Add a page
+    pdf.add_page()
+    # set style and size of font
+    # that you want in the pdf
+    pdf.set_font("Arial", size=15)
+    # open the text file in read mode
+    f = open("results/" + file_name + ".txt", "r")
+    # insert the texts in pdf
+    for x in f:
+        pdf.cell(200, 10, txt=x, ln=1, align='C')
+    # save the pdf with name .pdf
+    pdf.output("results/" + file_name + ".pdf")
+
+
 if __name__ == "__main__":
 
     matches = read_matches('results')
@@ -464,7 +508,7 @@ if __name__ == "__main__":
     filtered_matches = filter_matches(matches)
 
     #   Get longest winning/losing spree
-    # _, spree = get_spree('Mystyk', filtered_matches, True, False)
+    # _, spree = get_spree('\u26a1 Jarlloth', filtered_matches, True, False)
     #
     # for key in spree.keys():
     #     print(f'{key} {len(spree.get(key)[1])}')
@@ -472,7 +516,8 @@ if __name__ == "__main__":
     #         print(match)
 
     # print_player_stats('Mystyk', filtered_matches, 'analyzed_data_mystyk')
-    # print_player_stats('\u26a1 Jarlloth', filtered_matches, 'analyzed_data_jaro')
+    print_player_stats('\u26a1 Jarlloth', filtered_matches, 'analyzed_data_jaro')
+    best_matches = get_best('\u26a1 Jarlloth', filtered_matches)
 
     plot_scores('Mystyk', filtered_matches)
 
