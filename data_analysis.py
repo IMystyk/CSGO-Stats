@@ -276,7 +276,7 @@ def filter_matches(matches):
     """
     filtered_matches = []
     for match in matches:
-        if "\u26a1 Jarlloth" in match.players.keys() and match.date.date() > datetime(2022, 8, 30).date():
+        if "\u26a1 Jarlloth" in match.players.keys() and match.date.date() > datetime(2023, 2, 20).date():
             filtered_matches.append(match)
 
     return filtered_matches
@@ -515,9 +515,9 @@ if __name__ == "__main__":
     #     for match in spree.get(key)[1]:
     #         print(match)
 
-    # print_player_stats('Mystyk', filtered_matches, 'analyzed_data_mystyk')
+    print_player_stats('Mystyk', filtered_matches, 'analyzed_data_mystyk')
     print_player_stats('\u26a1 Jarlloth', filtered_matches, 'analyzed_data_jaro')
-    best_matches = get_best('\u26a1 Jarlloth', filtered_matches)
+    # best_matches = get_best('\u26a1 Jarlloth', filtered_matches)
 
     plot_scores('Mystyk', filtered_matches)
 
