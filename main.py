@@ -42,15 +42,26 @@ def get_matches(driver):
         # One element in the list is a score, not a player
         match_players = match_players.find_elements(By.XPATH, "./tbody/tr")
 
-        map_name = match_general[0].text.split()[-1]
-        tmp = match_general[1].text.replace(" GMT", "")
-        date = datetime.strptime(tmp, '%Y-%m-%d %H:%M:%S')
-        tmp_time_str = match_general[3].text.split()[-1]
-        tmp_time = datetime.strptime(tmp_time_str, '%M:%S')
-        wait_time = timedelta(minutes=tmp_time.minute, seconds=tmp_time.second)
-        tmp_time_str = match_general[4].text.split()[-1]
-        tmp_time = datetime.strptime(tmp_time_str, '%M:%S')
-        match_duration = timedelta(minutes=tmp_time.minute, seconds=tmp_time.second)
+        if not 'Ranked' in match_general[2].text:
+            map_name = match_general[0].text.split()[-1]
+            tmp = match_general[1].text.replace(" GMT", "")
+            date = datetime.strptime(tmp, '%Y-%m-%d %H:%M:%S')
+            tmp_time_str = match_general[2].text.split()[-1]
+            tmp_time = datetime.strptime(tmp_time_str, '%M:%S')
+            wait_time = timedelta(minutes=tmp_time.minute, seconds=tmp_time.second)
+            tmp_time_str = match_general[3].text.split()[-1]
+            tmp_time = datetime.strptime(tmp_time_str, '%M:%S')
+            match_duration = timedelta(minutes=tmp_time.minute, seconds=tmp_time.second)
+        else:
+            map_name = match_general[0].text.split()[-1]
+            tmp = match_general[1].text.replace(" GMT", "")
+            date = datetime.strptime(tmp, '%Y-%m-%d %H:%M:%S')
+            tmp_time_str = match_general[3].text.split()[-1]
+            tmp_time = datetime.strptime(tmp_time_str, '%M:%S')
+            wait_time = timedelta(minutes=tmp_time.minute, seconds=tmp_time.second)
+            tmp_time_str = match_general[4].text.split()[-1]
+            tmp_time = datetime.strptime(tmp_time_str, '%M:%S')
+            match_duration = timedelta(minutes=tmp_time.minute, seconds=tmp_time.second)
 
         if "matchhistorycompetitive" in driver.current_url:
             match_score = match_players[6].text.split(':')
@@ -101,7 +112,7 @@ def get_matches(driver):
     return matches
 
 
-def main():
+def load_data():
     driver = webdriver.Firefox()
     driver.get("https://steamcommunity.com/login/")
 

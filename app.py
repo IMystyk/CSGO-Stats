@@ -2,7 +2,34 @@ import sys
 from datetime import datetime
 from PySide6 import QtCore, QtWidgets, QtGui
 from PySide6.QtWidgets import QMainWindow
-from main import main
+from selenium.webdriver.common.by import By
+from data_analysis import read_matches, filter_matches, plot_scores, print_player_stats
+from selenium.webdriver.firefox.options import Options
+from main import load_data
+from selenium import webdriver
+import string
+
+
+def remove_non_ascii(a_str):
+    ascii_chars = set(string.printable)
+
+    return ''.join(
+        filter(lambda x: x in ascii_chars, a_str)
+    )
+
+
+def get_player_name(url):
+    """
+    function searches steam's user's profile for its nickname
+    :param url: url to steam profile
+    :return: player name (string)
+    """
+    options = Options()
+    options.headless = True
+    driver = webdriver.Firefox(options=options)
+    driver.get(url)
+    name = driver.find_element(By.CLASS_NAME, "actual_persona_name").text
+    return name
 
 
 class MainUIWindow(QtWidgets.QWidget):
@@ -32,7 +59,9 @@ class GetDataWindow(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def get_data_clicked(self):
-        main()
+        load_data()
+        self.notification = QtWidgets.QLabel("Data has been downloaded and saved")
+        self.layout.addWidget(self.notification)
 
 
 class ProcessDataWindow(QtWidgets.QWidget):
@@ -61,10 +90,6 @@ class ProcessDataWindow(QtWidgets.QWidget):
         self.layout.addWidget(self.players)
         self.plots = QtWidgets.QCheckBox("Generate score plot for each map")
         self.layout.addWidget(self.plots)
-        self.directory_name_label = QtWidgets.QLabel("Name of the directory where report will be saved (if empty name will be current date)")
-        self.layout.addWidget(self.directory_name_label)
-        self.directory_name = QtWidgets.QLineEdit()
-        self.layout.addWidget(self.directory_name)
         self.generate_report_button = QtWidgets.QPushButton("Generate Report")
         self.layout.addWidget(self.generate_report_button)
         self.return_button = QtWidgets.QPushButton("Return to main menu")
@@ -90,9 +115,20 @@ class ProcessDataWindow(QtWidgets.QWidget):
             # TODO (mystyk): make better exception
             return
         generate_plots = self.plots.isChecked()
-        directory_name = self.directory_name.text()
-        if len(directory_name) == 0:
-            directory_name = str(datetime.now()).split()[0]
+
+        participants = []
+        for participant in participants_links:
+            participants.append(get_player_name(participant))
+        players = []
+        for player in players_links:
+            players.append(get_player_name(player))
+
+        matches = read_matches('results')
+        filtered_matches = filter_matches(matches, players + participants, begin_date, finish_date)
+        for player in players:
+            print_player_stats(player, filtered_matches, remove_non_ascii(player))
+        if generate_plots:
+            plot_scores(players[0], filtered_matches)
 
 
 class MainWindow(QMainWindow):
@@ -109,8 +145,6 @@ class MainWindow(QMainWindow):
         self.main_ui.get_data_button.clicked.connect(self.get_button_clicked)
         self.main_ui.process_data_button.clicked.connect(self.process_button_clicked)
         self.show()
-        # self.player_names = [QtWidgets.QLineEdit()]
-        # self.layout.addWidget(self.player_names[0])
 
     @QtCore.Slot()
     def get_button_clicked(self):

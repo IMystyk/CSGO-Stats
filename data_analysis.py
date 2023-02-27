@@ -268,16 +268,22 @@ def get_best(player_name, matches):
     return {"highest_score": highest_score_match, "least_deaths": least_deaths_match, "most_kills": most_kills_match}
 
 
-def filter_matches(matches):
+def filter_matches(matches, players, begin_date=datetime(2000, 1, 1), finish_date=datetime.now()):
     """
-    Filters matches list
-    :param matches: list of all matches that are to be filtered
-    :return: filtered list of matches
+    Filters given list of matches
+    :param matches: list of matches to be filtered
+    :param players: list of players that must be in game
+    :param begin_date: the earliest acceptable match date
+    :param finish_date: the latest acceptable match date
+    :return: list of filtered matches
     """
-    filtered_matches = []
-    for match in matches:
-        if "\u26a1 Jarlloth" in match.players.keys() and match.date.date() > datetime(2023, 2, 20).date():
-            filtered_matches.append(match)
+    filtered_matches = matches.copy()
+    for match in filtered_matches:
+        for player in players:
+            if player not in match.players.keys():
+                filtered_matches.remove(match)
+        if match.date.date() <= begin_date.date() or match.date.date() >= finish_date.date():
+            filtered_matches.remove(match)
 
     return filtered_matches
 
@@ -505,7 +511,7 @@ if __name__ == "__main__":
     matches = read_matches('results')
 
     #  Here you filter matches
-    filtered_matches = filter_matches(matches)
+    filtered_matches = filter_matches(matches, ['Mystyk', '\u26a1 Jarlloth'], datetime(2000, 1, 1), datetime.now())
 
     #   Get longest winning/losing spree
     # _, spree = get_spree('\u26a1 Jarlloth', filtered_matches, True, False)
