@@ -281,9 +281,15 @@ def filter_matches(matches, players, begin_date=datetime(2000, 1, 1), finish_dat
     for match in filtered_matches:
         for player in players:
             if player not in match.players.keys():
-                filtered_matches.remove(match)
+                try:
+                    filtered_matches.remove(match)
+                except ValueError:
+                    pass
         if match.date.date() <= begin_date.date() or match.date.date() >= finish_date.date():
-            filtered_matches.remove(match)
+            try:
+                filtered_matches.remove(match)
+            except ValueError:
+                pass
 
     return filtered_matches
 
