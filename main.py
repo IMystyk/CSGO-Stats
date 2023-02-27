@@ -9,7 +9,7 @@ from models import Match
 import jsonpickle
 
 
-def get_matches():
+def get_matches(driver):
 
     matches = []
 
@@ -101,6 +101,28 @@ def get_matches():
     return matches
 
 
+def main():
+    driver = webdriver.Firefox()
+    driver.get("https://steamcommunity.com/login/")
+
+    try:
+        WebDriverWait(driver, 60).until(
+            ec.element_to_be_clickable((By.CLASS_NAME, "profile_page"))
+        )
+    except TimeoutException:
+        exit()
+
+    url = driver.current_url
+    url += "/gcpd/730/"
+    driver.get(url)
+
+    time.sleep(3)
+    matches = get_matches(driver)
+    json_string = jsonpickle.encode(matches)
+    with open('results.json', 'w') as output_file:
+        output_file.write(json_string)
+
+
 if __name__ == '__main__':
 
     driver = webdriver.Firefox()
@@ -118,7 +140,7 @@ if __name__ == '__main__':
     driver.get(url)
 
     time.sleep(3)
-    matches = get_matches()
+    matches = get_matches(driver)
     json_string = jsonpickle.encode(matches)
     with open('results.json', 'w') as output_file:
         output_file.write(json_string)
