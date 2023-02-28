@@ -277,19 +277,16 @@ def filter_matches(matches, players, begin_date=datetime(2000, 1, 1), finish_dat
     :param finish_date: the latest acceptable match date
     :return: list of filtered matches
     """
-    filtered_matches = matches.copy()
-    for match in filtered_matches:
+    filtered_matches = []
+    for match in matches:
+        remove = False
         for player in players:
             if player not in match.players.keys():
-                try:
-                    filtered_matches.remove(match)
-                except ValueError:
-                    pass
-        if match.date.date() <= begin_date.date() or match.date.date() >= finish_date.date():
-            try:
-                filtered_matches.remove(match)
-            except ValueError:
-                pass
+                remove = True
+        if match.date.date() < begin_date.date() or match.date.date() > finish_date.date():
+            remove = True
+        if not remove:
+            filtered_matches.append(match)
 
     return filtered_matches
 
@@ -353,7 +350,11 @@ def print_player_stats(player_name, matches, file_name):
             output_file.write(f'KILLS {map.get("kills")}\n')
             output_file.write(f'ASSISTS {map.get("assists")}\n')
             output_file.write(f'DEATHS {map.get("deaths")}\n')
-            output_file.write(f'HSP {round(map.get("hs_kills") / map.get("kills"), 2)}\n')
+            try:
+                hsp = map.get("hs_kills") / map.get("kills")
+            except ZeroDivisionError:
+                hsp = 0
+            output_file.write(f'HSP {round(hsp, 2)}\n')
             output_file.write(f'AVG KILLS {round(map.get("kills") / games, 2)}\n')
             output_file.write(f'AVG DEATHS {round(map.get("deaths") / games, 2)}\n')
             output_file.write(f'AVG SCORE {round(map.get("score") / games, 2)}\n')
@@ -405,7 +406,11 @@ def print_player_stats(player_name, matches, file_name):
         output_file.write(f'KILLS {total_kills}\n')
         output_file.write(f'ASSISTS {total_assists}\n')
         output_file.write(f'DEATHS {total_deaths}\n')
-        output_file.write(f'HSP {round(total_hs_kills / total_kills, 2)}\n')
+        try:
+            hsp = total_hs_kills / total_kills
+        except ZeroDivisionError:
+            hsp = 0
+        output_file.write(f'HSP {round(hsp, 2)}\n')
         output_file.write(f'AVG KILLS {round(total_kills / total_games, 2)}\n')
         output_file.write(f'AVG DEATHS {round(total_deaths / total_games, 2)}\n')
         output_file.write(f'AVG SCORE {round(total_score / total_games, 2)}\n')
