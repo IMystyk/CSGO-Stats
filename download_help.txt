@@ -1,0 +1,6 @@
+To download data from steam press 'Get data' button. 
+You will be redirected to steam page, where you will have 60 seconds to log in. 
+After that, you will have another 10 seconds to choose either competitive or wingman matches. 
+There is no indication how long loading all the matches might take. 
+Afther the page has loaded a console log will open, informing you about progress. 
+The results are then stored in 'results.txt' file, and notification appears on this screen.

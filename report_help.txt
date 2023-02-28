@@ -1,0 +1,6 @@
+This screen allows you to generate reports from matches stored in 'results.txt' file and apply number of filter to them. 
+You can select the earliest allowed date for the game, as well as the laties one (default is current date). 
+Players participating in game filters out matches without the players listed. 
+Please provide the list in the following format: link1, link2, link3 ect. 
+The next field specifies players whose reports will be generated. 
+There is also an option to generate plot representing round scores on each map.
