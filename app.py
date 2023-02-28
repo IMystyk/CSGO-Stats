@@ -94,7 +94,7 @@ class ProcessDataWindow(QtWidgets.QWidget):
         self.layout.addWidget(self.participants_label)
         self.participants = QtWidgets.QTextEdit()
         self.layout.addWidget(self.participants)
-        self.players_label = QtWidgets.QLabel("Players whose reports are to be generated (format save as above)")
+        self.players_label = QtWidgets.QLabel("Players whose reports are to be generated (format same as above)")
         self.layout.addWidget(self.players_label)
         self.players = QtWidgets.QTextEdit()
         self.layout.addWidget(self.players)
