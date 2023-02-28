@@ -29,6 +29,7 @@ def get_player_name(url):
     driver = webdriver.Firefox(options=options)
     driver.get(url)
     name = driver.find_element(By.CLASS_NAME, "actual_persona_name").text
+    driver.quit()
     return name
 
 
@@ -37,7 +38,8 @@ class MainUIWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.instruction = QtWidgets.QLabel("Main Screen", alignment=QtCore.Qt.AlignCenter)
+        self.instruction = QtWidgets.QLabel("To download the data from steam press 'Get data from steam' to produce report from data press 'Process data'"
+                                            , alignment=QtCore.Qt.AlignCenter)
         self.layout.addWidget(self.instruction)
         self.get_data_button = QtWidgets.QPushButton("Get data from steam")
         self.layout.addWidget(self.get_data_button)
@@ -49,7 +51,11 @@ class GetDataWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.instruction = QtWidgets.QLabel("Get data from steam", alignment=QtCore.Qt.AlignCenter)
+        with open('download_help.txt', 'r') as file:
+            help_text = ""
+            for line in file:
+                help_text += line
+        self.instruction = QtWidgets.QLabel(help_text, alignment=QtCore.Qt.AlignCenter)
         self.layout.addWidget(self.instruction)
         self.get_data_button = QtWidgets.QPushButton("Get data")
         self.layout.addWidget(self.get_data_button)
@@ -69,7 +75,11 @@ class ProcessDataWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.instruction = QtWidgets.QLabel("Test text")
+        with open('report_help.txt', 'r') as file:
+            help_text = ""
+            for line in file:
+                help_text += line
+        self.instruction = QtWidgets.QLabel(help_text, alignment=QtCore.Qt.AlignCenter)
         self.layout.addWidget(self.instruction)
         self.begin_date_label = QtWidgets.QLabel("Begin date")
         self.layout.addWidget(self.begin_date_label)

@@ -132,6 +132,7 @@ def load_data():
     json_string = jsonpickle.encode(matches)
     with open('results.json', 'w') as output_file:
         output_file.write(json_string)
+    driver.quit()
 
 
 if __name__ == '__main__':
