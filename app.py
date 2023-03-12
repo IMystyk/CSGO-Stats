@@ -114,15 +114,12 @@ class ProcessDataWindow(QtWidgets.QWidget):
         finish_date = self.finish_date.date()
         finish_date = datetime(finish_date.year(), finish_date.month(), finish_date.day())
         if begin_date > finish_date:
-            # TODO (mystyk): make better exception
             return
         participants_links = self.participants.toPlainText().strip(' ').strip('\n').split(',')
         if len(participants_links) == 0:
-            # TODO (mystyk): make better exception
             return
         players_links = self.players.toPlainText().strip(' ').strip('\n').split(',')
         if len(players_links) == 0:
-            # TODO (mystyk): make better exception
             return
         generate_plots = self.plots.isChecked()
 
